@@ -102,7 +102,9 @@ def panoids_from_response(text, closest=False, disp=False, proxies=None):
             pans.append({
                 "panoid": entry[0][1],
                 "lat": float(entry[2][0][2]),
-                "lon": float(entry[2][0][3])})
+                "lon": float(entry[2][0][3]),
+                # Compass direction of the image centre in degrees
+                "heading": float(entry[2][2][0])})
         except (IndexError, TypeError):
             pans.append(None)
 
@@ -148,7 +150,7 @@ def panoids_from_response(text, closest=False, disp=False, proxies=None):
     return pans
 
 
-TILE_URL = "https://streetviewpixels-pa.googleapis.com/v1/tile?cb_client=apiv3&panoid={0:}&output=tile&x={1:}&y={2:}&zoom=5&nbt=1"
+TILE_URL = "https://streetviewpixels-pa.googleapis.com/v1/tile?cb_client=apiv3&panoid={0:}&output=tile&x={1:}&y={2:}&zoom={3:}&nbt=1"
 
 # nbt=1 makes Google answer 400 for tiles outside of the panorama instead of
 # sending a black tile, which is how the grid of a panorama is detected.
@@ -157,8 +159,8 @@ TILE_URL = "https://streetviewpixels-pa.googleapis.com/v1/tile?cb_client=apiv3&p
 GRIDS = [(32, 16), (26, 13)]
 
 
-def tile_url(panoid, x, y):
-    return TILE_URL.format(panoid, x, y)
+def tile_url(panoid, x, y, zoom=5):
+    return TILE_URL.format(panoid, x, y, zoom)
 
 
 def tiles_info(panoid, grid=(imgx, 13)):

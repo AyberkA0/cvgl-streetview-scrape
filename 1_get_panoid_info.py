@@ -41,6 +41,28 @@ async def request_loop():
             print(traceback.format_exc())
 
 
+def load_boundary(path):
+    """ Reads the outer rings of a GeoJSON polygon as lists of (lon, lat) """
+    with open(path) as f:
+        geometry = json.load(f)
+    geometry = geometry.get('geometry', geometry)
+    if geometry['type'] == 'Polygon':
+        return [geometry['coordinates'][0]]
+    return [polygon[0] for polygon in geometry['coordinates']]
+
+
+def inside(lat, lon, rings):
+    """ Ray casting test of a point against the boundary """
+    for ring in rings:
+        hit = False
+        for (x1, y1), (x2, y2) in zip(ring, ring[1:]):
+            if (y1 > lat) != (y2 > lat) and lon < x1 + (lat - y1) * (x2 - x1) / (y2 - y1):
+                hit = not hit
+        if hit:
+            return True
+    return False
+
+
 def distance(p1, p2):
     """ Haversine formula: returns distance for latitude and longitude coordinates"""
     R = 6373
@@ -71,6 +93,7 @@ if __name__ == "__main__":
         center = config['center']
         radius = config['radius']
         resolution = config['resolution']
+        boundary = config.get('boundary')
 
     top_left = (center[0]-radius/70, center[1]+radius/70)
     bottom_right = (center[0]+radius/70, center[1]-radius/70)
@@ -112,6 +135,13 @@ if __name__ == "__main__":
             new_all_panoids.append(pan)
 
     print(f'Post-filtering: {len(new_all_panoids)} panoramas')
+
+    # Keep only the panoramas inside the boundary
+    if boundary:
+        rings = load_boundary(boundary)
+        new_all_panoids = [p for p in new_all_panoids if inside(p['lat'], p['lon'], rings)]
+        folium.PolyLine([[(lat, lon) for lon, lat in ring] for ring in rings], color='red').add_to(M)
+        print(f'Inside boundary: {len(new_all_panoids)} panoramas')
 
     # Add points streetview locations
     for pan in new_all_panoids:

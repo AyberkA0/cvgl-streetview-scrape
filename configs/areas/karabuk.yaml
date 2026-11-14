@@ -1,0 +1,7 @@
+# Centres are the OpenStreetMap place nodes of the towns; radius in kilometres.
+- {name: karabuk, center: [41.19554, 32.62312], radius: 4}
+- {name: safranbolu, center: [41.24567, 32.69296], radius: 3}
+- {name: eskipazar, center: [40.94467, 32.53142], radius: 1.5}
+- {name: yenice, center: [41.20067, 32.32793], radius: 1.5}
+- {name: eflani, center: [41.42294, 32.95819], radius: 1.5}
+- {name: ovacik, center: [41.07589, 32.92001], radius: 1.5}

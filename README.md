@@ -66,6 +66,7 @@ cvgl-scrape run --config configs/karabuk_university.yaml --limit 10
 | `ground` | Downloads the ground view of every listed panorama                      |
 | `aerial` | Downloads the aerial view of every listed panorama                      |
 | `status` | Reports how many views and complete pairs a dataset directory holds     |
+| `export` | Compiles the complete pairs into a training-ready dataset               |
 
 Images that already exist are skipped, so an interrupted download is resumed by running the same
 command again. The exit status is non-zero if any request failed permanently.
@@ -79,15 +80,21 @@ command again. The exit status is non-zero if any request failed permanently.
 | `--center LAT LON`    |              | Centre of a circular area, in decimal degrees               |
 | `--radius KM`         |              | Radius of the circular area                                 |
 | `--boundary GEOJSON`  |              | Polygon or multipolygon; panoramas outside of it are dropped|
+| `--areas FILE`        |              | YAML list of named areas, searched together                 |
 | `--spacing M`         | `40`         | Distance between query points                               |
+| `--thin M`            |              | Keep one panorama per M-metre cell, the latest capture      |
+| `--target N`          |              | Keep N panoramas chosen at random                           |
+| `--balance`           |              | Spread `--target` evenly over the areas                     |
+| `--seed`              | `0`          | Seed of the random choices                                  |
 | `--ground-size WxH`   | `1232x324`   | Size of the ground view                                     |
 | `--aerial-size PX`    | `256`        | Edge length of the aerial view                              |
 | `--zoom`              | `19`         | Web Mercator zoom level of the aerial view                  |
 | `--limit N`           |              | Download only the first N panoramas                         |
 | `--concurrency N`     | `16`         | Panoramas processed at the same time                        |
 
-Either `--center` with `--radius`, or `--boundary`, is required; with both, the area is their
-intersection. A configuration file uses the option names with underscores (`ground_size: 1232x324`);
+One of `--center` with `--radius`, `--boundary` or `--areas` is required; with a centre and a
+boundary, the area is their intersection. An areas file lists entries of the form
+`{name: ankara, center: [39.92, 32.85], radius: 3}`; the name is stored with every panorama. A configuration file uses the option names with underscores (`ground_size: 1232x324`);
 options given on the command line take precedence.
 
 ## Output
@@ -105,13 +112,45 @@ options given on the command line take precedence.
 | Column    | Description                                                                 |
 |-----------|-----------------------------------------------------------------------------|
 | `panoid`  | Street View panorama identifier, also the file name of both views           |
+| `area`    | Name of the area, empty for a single unnamed area                           |
 | `lat`     | Latitude in decimal degrees (WGS 84)                                        |
 | `lon`     | Longitude in decimal degrees (WGS 84)                                       |
+| `utm_x`   | UTM easting in metres                                                       |
+| `utm_y`   | UTM northing in metres                                                      |
+| `utm_zone`| UTM zone; all panoramas of an area share the zone of its mean longitude     |
 | `heading` | Compass direction of the centre of the original panorama, in degrees        |
 | `year`    | Capture year, empty if not reported                                         |
 | `month`   | Capture month, empty if not reported                                        |
 
 A panorama can be listed and still be unavailable for download; such rows have no ground view.
+Every image carries the panorama position as EXIF GPS tags and the panorama identifier as its EXIF
+image description.
+
+### Training-ready datasets
+
+```
+cvgl-scrape export --out data/example --to EXAMPLE --pairs 1000
+```
+
+copies the complete pairs into a new directory and adds what a training script needs:
+
+```
+EXAMPLE/
+  README.md        dataset card with the counts per split, area and year
+  metadata.csv     one row per pair, with its split and the image paths
+  metadata.json    panoIds, latlng, utm, utmZone, area, trainSet, valSet
+  splits/          train.csv, val.csv
+  ground/          <panoid>.jpg
+  aerial/          <panoid>.jpg
+```
+
+`trainSet` and `valSet` are zero-based indices into the other arrays, which follow the row order of
+`metadata.csv`. Because UTM coordinates are planar, the distance in metres between two pairs of the
+same zone is the Euclidean distance of their `utm` entries.
+
+Splits are spatial: the area is divided into cells of `--block` metres (default 500) and each cell
+is assigned to one split as a whole, so that neighbouring panoramas are not separated. `--val`
+(default 0.2) and `--test` (default 0) set the fractions.
 
 ## Method
 

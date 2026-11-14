@@ -1,0 +1,16 @@
+# CVTKB-G: the town centres of Karabük province.
+# cvgl-scrape run --config configs/cvtkb-g.yaml
+# cvgl-scrape export --config configs/cvtkb-g.yaml --to CVTKB-G --pairs 25000
+
+out: data/raw/cvtkb-g
+areas: configs/areas/karabuk.yaml
+spacing: 40
+
+# One panorama per 10 m cell; 3 % more than needed, as some panoramas are no longer available
+thin: 10
+target: 25750
+seed: 0
+
+ground_size: 1232x324
+aerial_size: 256
+zoom: 19

@@ -3,20 +3,29 @@
 import argparse
 import asyncio
 import sys
+from collections import Counter
+from pathlib import Path
 
 import yaml
 
 from . import __version__, aerial, streetview
 from .area import Area, load_rings
-from .dataset import Dataset
+from .dataset import Dataset, gps_exif
+from .export import export
 from .net import run_all
+from .selection import sample, thin
 
 DEFAULTS = {
     "out": "dataset",
     "center": None,
     "radius": None,
     "boundary": None,
+    "areas": None,
     "spacing": 40.0,
+    "thin": None,
+    "target": None,
+    "balance": False,
+    "seed": 0,
     "ground_size": (1232, 324),
     "aerial_size": 256,
     "zoom": 19,
@@ -60,8 +69,19 @@ def build_parser(config):
     group.add_argument("--radius", type=float, metavar="KM", help="radius of the circular area")
     group.add_argument("--boundary", metavar="GEOJSON",
                        help="polygon; only panoramas inside of it are kept")
+    group.add_argument("--areas", metavar="FILE",
+                       help="YAML list of named areas, each with a center and radius or a boundary")
     group.add_argument("--spacing", type=float, metavar="M",
                        help="distance between query points in metres (default: %(default)s)")
+
+    group = area.add_argument_group("selection")
+    group.add_argument("--thin", type=float, metavar="M",
+                       help="keep one panorama per M-metre cell, preferring the latest capture")
+    group.add_argument("--target", type=int, metavar="N",
+                       help="keep N panoramas chosen at random")
+    group.add_argument("--balance", action="store_true", default=None,
+                       help="spread --target evenly over the areas")
+    group.add_argument("--seed", type=int, help="seed of the random choice (default: %(default)s)")
 
     limit = argparse.ArgumentParser(add_help=False)
     limit.add_argument("--limit", type=int, metavar="N",
@@ -78,6 +98,18 @@ def build_parser(config):
     group.add_argument("--zoom", type=int,
                        help="Web Mercator zoom level (default: %(default)s)")
 
+    build = argparse.ArgumentParser(add_help=False)
+    build.add_argument("--to", metavar="DIR", required=True, help="directory of the compiled dataset")
+    build.add_argument("--name", help="dataset name (default: name of the target directory)")
+    build.add_argument("--pairs", type=int, metavar="N", help="keep exactly N pairs chosen at random")
+    build.add_argument("--block", type=float, default=500.0, metavar="M",
+                       help="edge of the cells that are kept together in one split (default: %(default)s)")
+    build.add_argument("--val", type=float, default=0.2,
+                       help="fraction of validation pairs (default: %(default)s)")
+    build.add_argument("--test", type=float, default=0.0,
+                       help="fraction of test pairs (default: %(default)s)")
+    build.add_argument("--seed", type=int, help="seed of the random choices (default: %(default)s)")
+
     parser = argparse.ArgumentParser(
         prog="cvgl-scrape",
         description="Collect paired Street View panoramas and satellite patches over an area.")
@@ -90,20 +122,30 @@ def build_parser(config):
         ("ground", [common, limit, ground], download_ground, "download the ground views"),
         ("aerial", [common, limit, air], download_aerial, "download the aerial views"),
         ("status", [common], status, "show what a dataset directory contains"),
+        ("export", [common, build], compile_dataset, "compile the complete pairs into a training-ready dataset"),
     ]:
         command = commands.add_parser(name, parents=parents, help=text, description=text.capitalize() + ".")
         command.set_defaults(function=function, limit=None, **defaults)
     return parser
 
 
-def make_area(args):
+def make_areas(args):
+    """The areas to search as {name: Area}; a single unnamed area unless --areas is given."""
     try:
-        return Area(
-            center=tuple(args.center) if args.center else None,
-            radius=args.radius * 1000 if args.radius else None,
-            rings=load_rings(args.boundary) if args.boundary else None,
-        )
-    except ValueError as error:
+        if not args.areas:
+            return {"": Area(
+                center=tuple(args.center) if args.center else None,
+                radius=args.radius * 1000 if args.radius else None,
+                rings=load_rings(args.boundary) if args.boundary else None,
+            )}
+        with open(args.areas, encoding="utf-8") as file:
+            entries = yaml.safe_load(file)
+        return {entry["name"]: Area(
+            center=tuple(entry["center"]) if "center" in entry else None,
+            radius=entry["radius"] * 1000 if "radius" in entry else None,
+            rings=load_rings(entry["boundary"]) if "boundary" in entry else None,
+        ) for entry in entries}
+    except (ValueError, KeyError) as error:
         raise SystemExit(f"error: {error}")
 
 
@@ -124,9 +166,9 @@ def report(label, outcomes, errors, present=0):
 
 
 def search(args):
-    area = make_area(args)
+    areas = make_areas(args)
     dataset = Dataset(args.out)
-    points = area.grid(args.spacing)
+    points = [point for area in areas.values() for point in area.grid(args.spacing)]
     found = {}
 
     async def worker(session, point):
@@ -138,15 +180,31 @@ def search(args):
     outcomes, errors = asyncio.run(run_all(
         points, worker, concurrency=args.concurrency * 4, label="search", unit="pt"))
 
-    panoramas = sorted((p for p in found.values() if area.contains(p["lat"], p["lon"])),
-                       key=lambda p: (p["lat"], p["lon"]))
+    panoramas = []
+    for panorama in found.values():
+        name = next((name for name, area in areas.items()
+                     if area.contains(panorama["lat"], panorama["lon"])), None)
+        if name is not None:
+            panoramas.append({**panorama, "area": name})
+    ok = report("search", outcomes, errors)
+    print(f"{len(panoramas)} panoramas inside the area")
+
+    if args.thin:
+        panoramas = thin(panoramas, args.thin)
+        print(f"{len(panoramas)} after keeping one per {args.thin:g} m cell")
+    if len(areas) > 1:
+        available = Counter(p["area"] for p in panoramas)
+        print("available per area: " + ", ".join(f"{name} {available[name]}" for name in areas))
+    if args.target:
+        panoramas = sample(panoramas, args.target, args.balance, args.seed)
+        print(f"{len(panoramas)} chosen at random" + (", balanced over the areas" if args.balance else ""))
+
+    panoramas.sort(key=lambda p: (p["area"], p["lat"], p["lon"]))
     dataset.write_metadata(panoramas)
-    dataset.write_map(panoramas, area)
+    dataset.write_map(panoramas, list(areas.values()))
 
     dated = sum(p["year"] is not None for p in panoramas)
-    ok = report("search", outcomes, errors)
-    print(f"{len(panoramas)} panoramas inside the area ({dated} with a capture date), "
-          f"listed in {dataset.metadata}")
+    print(f"{len(panoramas)} panoramas ({dated} with a capture date) listed in {dataset.metadata}")
     return ok
 
 
@@ -160,7 +218,8 @@ def download(args, view, label, make_image):
         image = await make_image(session, panorama)
         path = dataset.path(view, panorama)
         partial = path.with_suffix(".part")
-        image.save(partial, "JPEG", quality=92)
+        image.save(partial, "JPEG", quality=92,
+                   exif=gps_exif(panorama["lat"], panorama["lon"], panorama["panoid"]))
         partial.replace(path)
 
     outcomes, errors = asyncio.run(run_all(
@@ -198,6 +257,16 @@ def status(args):
                 for p in panoramas)
     print(f"{dataset.root}: {len(panoramas)} panoramas listed, {ground} ground views, "
           f"{air} aerial views, {pairs} complete pairs")
+    return True
+
+
+def compile_dataset(args):
+    target = Path(args.to)
+    count, splits = export(Dataset(args.out), target, args.name or target.name, args.zoom, pairs=args.pairs,
+                           block=args.block, val=args.val, test=args.test, seed=args.seed)
+    print(f"{target}: {count} pairs (" + ", ".join(f"{part} {size}" for part, size in sorted(splits.items())) + ")")
+    if args.pairs and count < args.pairs:
+        print(f"warning: only {count} of the requested {args.pairs} pairs are complete", file=sys.stderr)
     return True
 
 

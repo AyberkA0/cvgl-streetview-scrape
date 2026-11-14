@@ -6,6 +6,8 @@ area, intended for cross-view geo-localization (CVGL) experiments.
 Given a circle, a boundary polygon, or both, it enumerates the Google Street View panoramas inside
 the area and produces one image pair per panorama:
 
+Disclaimer: This tool is developed strictly for educational and academic research purposes. Users are responsible for complying with the Terms of Service of any third-party mapping platforms. The author does not host or distribute any copyrighted imagery.
+
 | View   | Default size (px) | Content                                                              |
 |--------|-------------------|----------------------------------------------------------------------|
 | Ground | 1232 × 324        | 360° panorama strip, north at the image centre, ±47° around horizon  |

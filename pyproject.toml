@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cvgl-scrape"
+name = "cvgl-streetview-scrape"
 version = "0.1.0"
 description = "Collection of paired ground-level and aerial images for cross-view geo-localization"
 readme = "README.md"

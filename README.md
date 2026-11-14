@@ -28,8 +28,8 @@ its providers.
 Python 3.10 or newer is required.
 
 ```
-git clone https://github.com/AyberkA0/cvgl-streetview-dataset-scraping
-cd cvgl-streetview-dataset-scraping
+git clone https://github.com/AyberkA0/cvgl-streetview-scrape
+cd cvgl-streetview-scrape
 pip install .
 ```
 

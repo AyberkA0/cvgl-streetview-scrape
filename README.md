@@ -11,6 +11,18 @@ Google Street View panoramas inside the area and produces one image pair per pan
 | Ground | 1232 × 324 | 360° panorama strip, north at the image centre, ±47° around horizon  |
 | Aerial | 256 × 256  | Satellite patch, north up, centred on the panorama position          |
 
+## Examples
+
+Pairs collected on the campus of Karabük University, scaled down for display. Imagery © Google and
+its providers.
+
+| Ground view (1232 × 324) | Aerial view (256 × 256) |
+|--------------------------|-------------------------|
+| <img src="docs/samples/1_ground.jpg" width="616"> | <img src="docs/samples/1_aerial.jpg" width="162"> |
+| <img src="docs/samples/2_ground.jpg" width="616"> | <img src="docs/samples/2_aerial.jpg" width="162"> |
+| <img src="docs/samples/3_ground.jpg" width="616"> | <img src="docs/samples/3_aerial.jpg" width="162"> |
+| <img src="docs/samples/4_ground.jpg" width="616"> | <img src="docs/samples/4_aerial.jpg" width="162"> |
+
 ## Method
 
 **1. Panorama enumeration.** The area is covered with a regular grid of query points

@@ -1,5 +1,0 @@
-aiohttp>=3.9
-folium>=0.14
-Pillow>=10.0
-PyYAML>=6.0
-requests>=2.31

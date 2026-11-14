@@ -1,0 +1,11 @@
+# Campus of Karabük University.
+# cvgl-scrape run --config configs/karabuk_university.yaml
+
+out: data/karabuk_university
+boundary: boundaries/karabuk_university.geojson
+spacing: 40
+
+ground_size: 1232x324
+
+aerial_size: 256
+zoom: 19

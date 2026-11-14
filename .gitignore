@@ -7,3 +7,7 @@ tiles/
 cube_pano/
 .DS_Store
 satellite/
+data/
+dataset/
+*.egg-info/
+.pytest_cache/

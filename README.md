@@ -163,6 +163,11 @@ pip install -e ".[dev]"
 pytest
 ```
 
+## License
+
+The code is released under the MIT License, see [LICENSE](LICENSE). The licence covers the code only,
+not the imagery retrieved with it nor the sample images in `docs/samples`.
+
 ## Acknowledgements
 
 The grid-based enumeration of panoramas follows the idea of

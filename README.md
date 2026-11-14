@@ -46,7 +46,8 @@ python 3_project_panoramas.py    # writes cube_pano/
 ```
 
 The download stage skips panoramas that already exist on disk, so an interrupted run can be
-resumed by starting it again. Only one `panoids_*.json` file may be present in the working
+resumed by starting it again. It stops on its own when less than 20 GB of disk space is left
+(`MIN_FREE_GB`). Only one `panoids_*.json` file may be present in the working
 directory.
 
 ## Configuration

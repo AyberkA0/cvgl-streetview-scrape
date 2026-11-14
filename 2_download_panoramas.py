@@ -3,9 +3,13 @@ import json
 import os
 import traceback
 import glob
+import shutil
 import aiohttp
 
 import streetview
+
+# Downloading stops when less than this much disk space is left
+MIN_FREE_GB = 20
 
 
 async def get_grid(panoid, session):
@@ -105,6 +109,10 @@ if __name__ == "__main__":
     i = 0
     while True:
         i += 1
+        free_gb = shutil.disk_usage('.').free / 1024**3
+        if free_gb < MIN_FREE_GB:
+            print(f'Stopping: only {free_gb:.1f} GB of disk space left')
+            break
         print(f'Running the next batch: {(i-1)*100+1} → {i*100}')
         asyncio.run(download_loop(panoids, 100 * i))
         if 100 * i > len(panoids):

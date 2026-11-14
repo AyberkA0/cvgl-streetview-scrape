@@ -1,4 +1,4 @@
-# cvgl-streetview-dataset-scraping
+# Data scraping for Cross-View Geo-localization (Google Streetview)
 
 A command line tool for collecting paired ground-level and aerial images over a bounded geographic
 area, intended for cross-view geo-localization (CVGL) experiments.

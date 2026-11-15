@@ -1,8 +1,8 @@
-# CVTUR-G: the centres of the 80 provincial capitals of Türkiye other than Karabük.
-# cvgl-scrape run --config configs/cvtur-g.yaml
-# cvgl-scrape export --config configs/cvtur-g.yaml --to CVTUR-G --pairs 100000
+# CVTUR: the centres of the 80 provincial capitals of Türkiye other than Karabük.
+# cvgl-scrape run --config configs/cvtur.yaml
+# cvgl-scrape export --config configs/cvtur.yaml --to CVTUR --pairs 100000
 
-out: data/raw/cvtur-g
+out: data/raw/cvtur
 areas: configs/areas/turkiye.yaml
 spacing: 80
 

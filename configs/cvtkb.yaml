@@ -1,8 +1,8 @@
-# CVTKB-G: the town centres of Karabük province.
-# cvgl-scrape run --config configs/cvtkb-g.yaml
-# cvgl-scrape export --config configs/cvtkb-g.yaml --to CVTKB-G --pairs 25000
+# CVTKB: the town centres of Karabük province.
+# cvgl-scrape run --config configs/cvtkb.yaml
+# cvgl-scrape export --config configs/cvtkb.yaml --to CVTKB --pairs 25000
 
-out: data/raw/cvtkb-g
+out: data/raw/cvtkb
 areas: configs/areas/karabuk.yaml
 spacing: 40
 

@@ -15,15 +15,16 @@ Disclaimer: This tool is developed strictly for educational and academic researc
 
 ## Examples
 
-Pairs collected on the campus of Karabük University, scaled down for display. Imagery © Google and
-its providers.
+Illustrations of the output format, not collected imagery. Each pair is rendered from one synthetic
+scene with the projection and alignment the tool uses: the ground view is a north-centred 360° strip
+covering ±47° around the horizon, the aerial view a north-up patch of 57.5 m centred on the camera.
 
 | Ground view (1232 × 324) | Aerial view (256 × 256) |
 |--------------------------|-------------------------|
-| <img src="docs/samples/1_ground.jpg" width="616"> | <img src="docs/samples/1_aerial.jpg" width="162"> |
-| <img src="docs/samples/2_ground.jpg" width="616"> | <img src="docs/samples/2_aerial.jpg" width="162"> |
-| <img src="docs/samples/3_ground.jpg" width="616"> | <img src="docs/samples/3_aerial.jpg" width="162"> |
-| <img src="docs/samples/4_ground.jpg" width="616"> | <img src="docs/samples/4_aerial.jpg" width="162"> |
+| <img src="docs/samples/1_ground.png" width="616"> | <img src="docs/samples/1_aerial.png" width="162"> |
+| <img src="docs/samples/2_ground.png" width="616"> | <img src="docs/samples/2_aerial.png" width="162"> |
+| <img src="docs/samples/3_ground.png" width="616"> | <img src="docs/samples/3_aerial.png" width="162"> |
+| <img src="docs/samples/4_ground.png" width="616"> | <img src="docs/samples/4_aerial.png" width="162"> |
 
 ## Installation
 
@@ -207,7 +208,7 @@ pytest
 ## License
 
 The code is released under the MIT License, see [LICENSE](LICENSE). The licence covers the code only,
-not the imagery retrieved with it nor the sample images in `docs/samples`.
+not the imagery retrieved with it.
 
 ## Acknowledgements
 
